@@ -149,5 +149,7 @@ fn render_glyph_run<T: RenderingContext>(
         .font_size(font_size)
         .normalized_coords(normalized_coords)
         .hint(true)
+        // TOGGLE ME
+        .atlas_cache(true)
         .fill_glyphs(glyphs);
 }

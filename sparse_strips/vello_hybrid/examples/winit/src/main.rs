@@ -9,8 +9,8 @@ use render_context::{RenderContext, RenderSurface, create_vello_renderer, create
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
-use vello_common::kurbo::{Affine, Point};
-use vello_common::paint::ImageId;
+use vello_common::kurbo::{Affine, Point, Rect, Shape, Vec2};
+use vello_common::paint::{Color, ImageId};
 use vello_common::paint::ImageSource;
 use vello_example_scenes::image::ImageScene;
 use vello_example_scenes::spritesheet::{SPRITESHEET_TEXTURE_ID, SpritesheetScene};
@@ -24,6 +24,8 @@ use winit::{
     keyboard::{Key, NamedKey},
     window::{Window, WindowId},
 };
+use vello_common::filter_effects::{Filter, FilterFunction};
+use vello_common::peniko::{BlendMode, Compose, Mix};
 
 const ZOOM_STEP: f64 = 0.1;
 
@@ -207,11 +209,11 @@ impl ApplicationHandler for App<'_> {
             }
             WindowEvent::KeyboardInput {
                 event:
-                    KeyEvent {
-                        logical_key,
-                        state: ElementState::Pressed,
-                        ..
-                    },
+                KeyEvent {
+                    logical_key,
+                    state: ElementState::Pressed,
+                    ..
+                },
                 ..
             } => {
                 let mut upload_images = false;
@@ -356,6 +358,42 @@ impl ApplicationHandler for App<'_> {
 
                 self.scene.set_transform(self.transform);
                 self.scenes[self.current_scene].render(&mut self.scene, self.transform);
+
+                {
+                    let box_shadow = Rect::new(600.0, 400.0, 1200.0, 800.0);
+                    let box_shadow_outline = box_shadow.inflate(50.0, 10.0);
+                    let box_shadow_color = Color::from_rgb8(255, 0, 0);
+                    let box_shadow_offset = Vec2::new(0.0, 10.0);
+                    let blur_radius = 10.0;
+                    let filter = Some(Filter::from_function(FilterFunction::Blur {
+                        radius: blur_radius as f32,
+                    }));
+                    self.scene.push_layer(
+                        None,
+                        Some(BlendMode::new(Mix::Normal, Compose::SrcOver)),
+                        None,
+                        None,
+                        filter,
+                    );
+
+                    self.scene.set_transform(self.transform * Affine::translate(box_shadow_offset));
+
+                    self.scene.set_paint(box_shadow_color);
+                    self.scene.fill_path(&box_shadow_outline.to_path(0.1));
+
+                    self.scene.set_transform(self.transform);
+
+                    self.scene.set_blend_mode(BlendMode::new(Mix::Normal, Compose::DestOut));
+                    self.scene.set_paint(Color::WHITE);
+                    self.scene.fill_path(&box_shadow.to_path(0.1));
+
+                    self.scene.set_blend_mode(BlendMode::new(Mix::Normal, Compose::SrcOver));
+
+                    self.scene.pop_layer();
+
+                    self.scene.set_paint(Color::from_rgb8(0, 255, 0));
+                    self.scene.fill_path(&box_shadow.to_path(0.1));
+                }
 
                 let device_handle = &self.context.devices[surface.dev_id];
                 let render_size = RenderSize {

@@ -476,6 +476,8 @@ where
 {
     let mut scenes = Vec::new();
 
+    scenes.push(AnyScene::new(text::TextScene::new("あさきゆめみし　ゑひもせす Hello, Vello! いろはにほへと　ちりぬるを (102)")));
+
     // Create SVG scenes for each provided path.
     if let Some(paths) = svg_paths {
         for path in paths {
@@ -487,7 +489,6 @@ where
         scenes.push(AnyScene::new(svg::SvgScene::tiger()));
     }
 
-    scenes.push(AnyScene::new(text::TextScene::new("Hello, Vello!")));
     scenes.push(AnyScene::new(emoji_grid::EmojiGridScene::new()));
     scenes.push(AnyScene::new(random_text::RandomTextScene::new()));
     scenes.push(AnyScene::new(simple::SimpleScene::new()));
